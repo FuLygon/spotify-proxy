@@ -13,6 +13,8 @@ type cache struct {
 	cache *gocache.Cache
 }
 
+const NoExpiration = gocache.NoExpiration
+
 func NewCache() Cache {
 	return &cache{
 		cache: gocache.New(15*time.Minute, 30*time.Minute),

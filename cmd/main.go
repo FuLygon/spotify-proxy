@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	spotifyAuth "github.com/zmb3/spotify/v2/auth"
 	"log"
 	"spotify-proxy/config"
 	"spotify-proxy/internal/cache"
@@ -32,11 +33,19 @@ func main() {
 	// Initialize cache
 	cacheInstance := cache.NewCache()
 
+	// Setup spotify authenticator
+	sa := spotifyAuth.New(
+		spotifyAuth.WithRedirectURL(conf.RedirectUri),
+		spotifyAuth.WithClientID(conf.ClientId),
+		spotifyAuth.WithClientSecret(conf.ClientSecret),
+		spotifyAuth.WithScopes(conf.Scope...),
+	)
+
 	// Setup services
-	authService := services.NewAuthService(cacheInstance)
+	authService := services.NewAuthService(sa, cacheInstance)
 
 	// Setup handlers
-	authHandler := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(conf, authService)
 
 	// Setup routes
 	r := routes.NewRoutes(
