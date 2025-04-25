@@ -24,6 +24,12 @@ func main() {
 		log.Fatal("failed to load configuration: ", err)
 	}
 
+	// Load proxy route config
+	proxyRoutesConf, err := config.LoadProxyRoutesConfig("./routes.yaml")
+	if err != nil {
+		log.Fatal("failed to load proxy route configuration: ", err)
+	}
+
 	// Set Gin mode
 	gin.SetMode(conf.GinMode)
 	accessRouter := gin.Default()
@@ -67,9 +73,13 @@ func main() {
 	r := routes.NewRoutes(
 		accessRouter,
 		proxyRouter,
+		proxyRoutesConf,
 		authHandler,
 		proxyHandler,
 	)
+	if err != nil {
+		log.Fatal("failed to setup routes: ", err)
+	}
 
 	// Register routes
 	r.RegisterRoutes()

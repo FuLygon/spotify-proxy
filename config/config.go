@@ -2,7 +2,10 @@ package config
 
 import (
 	"github.com/caarlos0/env/v11"
+	"github.com/go-playground/validator/v10"
+	"github.com/goccy/go-yaml"
 	"github.com/joho/godotenv"
+	"os"
 )
 
 type Config struct {
@@ -20,6 +23,17 @@ type Config struct {
 	RefreshTokenOutput bool     `env:"SPOTIFY_REFRESH_TOKEN_OUTPUT" envDefault:"false"`
 }
 
+var validate = validator.New()
+
+type ProxyRouteConfig struct {
+	Path    string   `yaml:"path" validate:"required"`
+	Methods []string `yaml:"methods" validate:"min=1,dive,oneof=GET POST PUT DELETE PATCH OPTIONS"`
+}
+
+type ProxyRoutesConfig struct {
+	ProxyRoutes []ProxyRouteConfig `yaml:"routes" validate:"dive"`
+}
+
 // LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
 	_ = godotenv.Load()
@@ -30,4 +44,28 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func LoadProxyRoutesConfig(path string) (*ProxyRoutesConfig, error) {
+	// Skip if config file does not exist
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var config ProxyRoutesConfig
+	if err = yaml.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+
+	err = validate.Struct(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }

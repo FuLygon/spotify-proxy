@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"spotify-proxy/config"
 	"spotify-proxy/internal/handlers"
 )
 
@@ -11,23 +12,26 @@ type Routes interface {
 }
 
 type routes struct {
-	router       *gin.Engine
-	proxyRouter  *gin.Engine
-	authHandler  handlers.AuthHandler
-	proxyHandler handlers.Proxy
+	router            *gin.Engine
+	proxyRouter       *gin.Engine
+	proxyRoutesConfig *config.ProxyRoutesConfig
+	authHandler       handlers.AuthHandler
+	proxyHandler      handlers.Proxy
 }
 
 func NewRoutes(
 	router *gin.Engine,
 	proxyRouter *gin.Engine,
+	proxyRoutesConfig *config.ProxyRoutesConfig,
 	authHandler handlers.AuthHandler,
 	proxyHandler handlers.Proxy,
 ) Routes {
 	return &routes{
-		router:       router,
-		proxyRouter:  proxyRouter,
-		authHandler:  authHandler,
-		proxyHandler: proxyHandler,
+		router:            router,
+		proxyRouter:       proxyRouter,
+		proxyRoutesConfig: proxyRoutesConfig,
+		authHandler:       authHandler,
+		proxyHandler:      proxyHandler,
 	}
 }
 
@@ -54,6 +58,15 @@ func (r *routes) RegisterRoutes() {
 	authGroup.GET("/login", r.authHandler.HandleLogin)
 	authGroup.GET("/callback", r.authHandler.HandleCallback)
 
-	// Reverse proxy endpoints
-	proxyRouter.Any("/*path", r.proxyHandler.ReverseProxy)
+	if r.proxyRoutesConfig != nil && len(r.proxyRoutesConfig.ProxyRoutes) > 0 {
+		// Only proxy routes from the config file
+		for _, route := range r.proxyRoutesConfig.ProxyRoutes {
+			for _, method := range route.Methods {
+				proxyRouter.Handle(method, route.Path, r.proxyHandler.ReverseProxy)
+			}
+		}
+	} else {
+		// Catch-all proxy
+		proxyRouter.Any("/*path", r.proxyHandler.ReverseProxy)
+	}
 }
