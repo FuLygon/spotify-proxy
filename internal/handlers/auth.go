@@ -32,6 +32,13 @@ func (h *authHandler) HandleCallback(c *gin.Context) {
 	state := c.Query("state")
 	code := c.Query("code")
 
+	if code == "" {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{
+			"error": "Missing code",
+		})
+		return
+	}
+
 	if state != h.config.State {
 		c.HTML(http.StatusBadRequest, "error.html", gin.H{
 			"error": "Mismatched state",
