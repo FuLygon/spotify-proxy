@@ -20,17 +20,17 @@ type authService struct {
 	cache cache.Cache
 }
 
-const (
-	accessTokenCacheKey  = "access_token"
-	refreshTokenCacheKey = "refresh_token"
-)
-
 func NewAuthService(sa *spotifyAuth.Authenticator, cache cache.Cache) AuthService {
 	return &authService{
 		sa:    sa,
 		cache: cache,
 	}
 }
+
+const (
+	accessTokenCacheKey  = "access_token"
+	refreshTokenCacheKey = "refresh_token"
+)
 
 func (s *authService) Login(state string) string {
 	return s.sa.AuthURL(state)
