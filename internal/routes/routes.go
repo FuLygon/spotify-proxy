@@ -58,6 +58,7 @@ func (r *routes) RegisterRoutes() {
 	authGroup.GET("/login", r.authHandler.HandleLogin)
 	authGroup.GET("/callback", r.authHandler.HandleCallback)
 
+	// Reverse proxy
 	if r.proxyRoutesConfig != nil && len(r.proxyRoutesConfig.ProxyRoutes) > 0 {
 		// Only proxy routes from the config file
 		for _, route := range r.proxyRoutesConfig.ProxyRoutes {
