@@ -3,13 +3,18 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	spotifyAuth "github.com/zmb3/spotify/v2/auth"
+	"golang.org/x/sync/errgroup"
 	"log"
+	"net/http"
 	"spotify-proxy/config"
 	"spotify-proxy/internal/cache"
 	"spotify-proxy/internal/handlers"
 	"spotify-proxy/internal/routes"
 	"spotify-proxy/internal/services"
+	"time"
 )
+
+var g errgroup.Group
 
 func main() {
 	// Load env
@@ -20,11 +25,17 @@ func main() {
 
 	// Set Gin mode
 	gin.SetMode(conf.GinMode)
-	router := gin.Default()
+	accessRouter := gin.Default()
+	proxyRouter := gin.Default()
 
 	// Set trusted proxies
 	if len(conf.TrustedProxies) > 0 {
-		err = router.SetTrustedProxies(conf.TrustedProxies)
+		err = accessRouter.SetTrustedProxies(conf.TrustedProxies)
+		if err != nil {
+			log.Printf("error setting trusted proxies: %v", err)
+		}
+
+		err = proxyRouter.SetTrustedProxies(conf.TrustedProxies)
 		if err != nil {
 			log.Printf("error setting trusted proxies: %v", err)
 		}
@@ -46,18 +57,44 @@ func main() {
 
 	// Setup handlers
 	authHandler := handlers.NewAuthHandler(conf, authService)
+	proxyHandler := handlers.NewProxyHandler(conf, authService)
 
 	// Setup routes
 	r := routes.NewRoutes(
-		router,
+		accessRouter,
+		proxyRouter,
 		authHandler,
+		proxyHandler,
 	)
 
 	// Register routes
 	r.RegisterRoutes()
 
-	// Start server
-	if err = router.Run(":" + conf.Port); err != nil {
-		log.Fatal("failed to start server: ", err)
+	accessServer := &http.Server{
+		Addr:         ":8000",
+		Handler:      accessRouter.Handler(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	proxyServer := &http.Server{
+		Addr:         ":8001",
+		Handler:      proxyRouter.Handler(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	g.Go(func() error {
+		log.Printf("Access server is listening on %s", accessServer.Addr)
+		return accessServer.ListenAndServe()
+	})
+
+	g.Go(func() error {
+		log.Printf("Proxy server is listening on %s", proxyServer.Addr)
+		return proxyServer.ListenAndServe()
+	})
+
+	if err = g.Wait(); err != nil {
+		log.Fatal(err)
 	}
 }
