@@ -75,6 +75,6 @@ The service runs on two ports by default:
 
 On service startup, you will need to access http://127.0.0.1:8001 to log in, so the service can get and cache your refresh token, if the service is restarted, you will need to log in again.
 
-If you set your refresh token in the [`.env`](.env.example) file, then you're no longer need to log in. If you don't know how to get the refresh token, you can set `SPOTIFY_REFRESH_TOKEN_OUTPUT`, then access the login page, after logged in successfully, the refresh token will be printed to the service console. You can then set it in the `.env` file and restart the service.
+If you set your refresh token in the `.env`file, then you're no longer need to log in. If you don't know how to get the refresh token, you can set `SPOTIFY_REFRESH_TOKEN_OUTPUT`, then access the login page, after logged in successfully, the refresh token will be printed to the service console. You can then set it in the `.env` file and restart the service.
 
-By default, the proxy server will forward all routes to Spotify API (https://api.spotify.com), you can specify which routes to forward in the [`routes.yaml`](routes.example.yaml).
+By default, the proxy server will forward all routes to Spotify API (https://api.spotify.com), you can specify which routes to forward in the `routes.yaml` file.
