@@ -13,13 +13,13 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f5f5f5;
+            background-color: #121212;
         }
         .login-container {
-            background-color: white;
+            background-color: #282828;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             width: 100%;
             max-width: 400px;
             text-align: center;
@@ -40,8 +40,12 @@
         .spotify-button:hover {
             background-color: #1ed760;
         }
+        .login-title {
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
         .error-message {
-            color: #e22134;
+            color: #ff4444;
             font-size: 0.875rem;
             margin-top: 1rem;
             display: none;
@@ -50,7 +54,7 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>Spotify Login</h1>
+        <h1 class="login-title">Spotify Login</h1>
         <a href="/auth/login" class="spotify-button">Login with Spotify</a>
         <div class="error-message" id="error-message"></div>
     </div>
