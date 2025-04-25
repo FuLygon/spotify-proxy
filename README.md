@@ -1,5 +1,7 @@
 # Reverse proxy for Spotify API
 
+[![Publish to GitHub Container Registry](https://github.com/FuLygon/spotify-proxy/actions/workflows/publish-package.yaml/badge.svg)](https://github.com/FuLygon/spotify-proxy/actions/workflows/publish-package.yaml)
+
 Initially made this to use with my private fork of [NowPlaying for Spotify](https://github.com/busybox11/NowPlaying-for-Spotify) and my [Homepage](https://github.com/gethomepage/homepage) dashboard.
 
 ## Usage and Configuration
