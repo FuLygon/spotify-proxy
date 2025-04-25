@@ -48,9 +48,6 @@ func main() {
 		}
 	}
 
-	// Load HTML
-	accessRouter.LoadHTMLFiles("static/login.html")
-
 	// Initialize cache
 	cacheInstance := cache.NewCache()
 
