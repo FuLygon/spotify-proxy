@@ -9,8 +9,9 @@ FROM alpine:3.21
 RUN apk --no-cache add ca-certificates curl
 WORKDIR /app
 COPY --from=builder /app/spotify-proxy .
+COPY --from=builder /app/static/ ./static/
 
 HEALTHCHECK --interval=1m --timeout=3s --start-period=3s --retries=3 \
-  CMD curl -f http://127.0.0.1:${PORT:-8080}/health || exit 1
-EXPOSE ${PORT:-8080}
+  CMD curl -f http://127.0.0.1:${ACCESS_PORT:-8000}/health || exit 1
+EXPOSE ${ACCESS_PORT:-8000} ${PROXY_PORT:-8001}
 ENTRYPOINT ["/app/spotify-proxy"]

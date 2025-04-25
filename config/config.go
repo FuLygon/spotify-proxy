@@ -6,7 +6,8 @@ import (
 )
 
 type Config struct {
-	Port               string   `env:"PORT" envDefault:"8080"`
+	AccessPort         string   `env:"ACCESS_PORT" envDefault:"8000"`
+	ProxyPort          string   `env:"PROXY_PORT" envDefault:"8001"`
 	GinMode            string   `env:"GIN_MODE" envDefault:"debug"`
 	LogLevel           string   `env:"LOG_LEVEL" envDefault:"info"`
 	TrustedProxies     []string `env:"TRUSTED_PROXIES" envDefault:"10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" envSeparator:","`

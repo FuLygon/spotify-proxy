@@ -33,15 +33,19 @@ func (h *authHandler) HandleCallback(c *gin.Context) {
 	code := c.Query("code")
 
 	if state != h.config.State {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "state mismatch"})
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{
+			"error": "Mismatched state",
+		})
 		return
 	}
 
 	err := h.service.Callback(c, code, h.config.RefreshTokenOutput)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Login successful"})
+	c.HTML(http.StatusOK, "success.html", nil)
 }

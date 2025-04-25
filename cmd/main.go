@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	spotifyAuth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/sync/errgroup"
@@ -41,6 +42,9 @@ func main() {
 		}
 	}
 
+	// Load HTML
+	accessRouter.LoadHTMLFiles("static/login.html")
+
 	// Initialize cache
 	cacheInstance := cache.NewCache()
 
@@ -71,14 +75,14 @@ func main() {
 	r.RegisterRoutes()
 
 	accessServer := &http.Server{
-		Addr:         ":8000",
+		Addr:         fmt.Sprintf(":%s", conf.AccessPort),
 		Handler:      accessRouter.Handler(),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	proxyServer := &http.Server{
-		Addr:         ":8001",
+		Addr:         fmt.Sprintf(":%s", conf.ProxyPort),
 		Handler:      proxyRouter.Handler(),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,

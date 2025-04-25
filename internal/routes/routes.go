@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"spotify-proxy/internal/handlers"
 )
 
@@ -34,6 +35,14 @@ func NewRoutes(
 func (r *routes) RegisterRoutes() {
 	router := r.router
 	proxyRouter := r.proxyRouter
+
+	// Load HTML templates
+	router.LoadHTMLGlob("static/*.html")
+
+	// Serve index page
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", gin.H{})
+	})
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
