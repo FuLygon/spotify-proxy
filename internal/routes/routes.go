@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"spotify-proxy/config"
 	"spotify-proxy/internal/handlers"
 )
 
@@ -14,24 +13,21 @@ type Routes interface {
 type routes struct {
 	router            *gin.Engine
 	proxyRouter       *gin.Engine
-	proxyRoutesConfig *config.ProxyRoutesConfig
 	authHandler       handlers.AuthHandler
-	proxyHandler      handlers.Proxy
+	nowplayingHandler handlers.NowPlayingHandler
 }
 
 func NewRoutes(
 	router *gin.Engine,
 	proxyRouter *gin.Engine,
-	proxyRoutesConfig *config.ProxyRoutesConfig,
 	authHandler handlers.AuthHandler,
-	proxyHandler handlers.Proxy,
+	nowplayingHandler handlers.NowPlayingHandler,
 ) Routes {
 	return &routes{
 		router:            router,
 		proxyRouter:       proxyRouter,
-		proxyRoutesConfig: proxyRoutesConfig,
 		authHandler:       authHandler,
-		proxyHandler:      proxyHandler,
+		nowplayingHandler: nowplayingHandler,
 	}
 }
 
@@ -58,16 +54,7 @@ func (r *routes) RegisterRoutes() {
 	authGroup.GET("/login", r.authHandler.HandleLogin)
 	authGroup.GET("/callback", r.authHandler.HandleCallback)
 
-	// Reverse proxy
-	if r.proxyRoutesConfig != nil && len(r.proxyRoutesConfig.ProxyRoutes) > 0 {
-		// Only proxy routes from the config file
-		for _, route := range r.proxyRoutesConfig.ProxyRoutes {
-			for _, method := range route.Methods {
-				proxyRouter.Handle(method, route.Path, r.proxyHandler.ReverseProxy)
-			}
-		}
-	} else {
-		// Catch-all proxy
-		proxyRouter.Any("/*path", r.proxyHandler.ReverseProxy)
-	}
+	// Spotify NowPlayingHandler API
+	proxyRouter.GET("/v1/me/player", r.nowplayingHandler.HandleCurrentTrack)
+	proxyRouter.GET("/v1/me/player/queue", r.nowplayingHandler.HandleQueue)
 }

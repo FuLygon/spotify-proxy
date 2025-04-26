@@ -1,7 +1,0 @@
-routes:
-# Example:
-#  - path: "/v1/me/player"
-#    methods: ["GET", "POST"]
-#
-#  - path: "/v1/me/player/queue"
-#    methods: ["GET", "PUT"]

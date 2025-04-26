@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	spotifyAuth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/sync/errgroup"
@@ -24,16 +25,19 @@ func main() {
 		log.Fatal("failed to load configuration: ", err)
 	}
 
-	// Load proxy route config
-	proxyRoutesConf, err := config.LoadProxyRoutesConfig("./routes.yaml")
-	if err != nil {
-		log.Fatal("failed to load proxy route configuration: ", err)
-	}
-
 	// Set Gin mode
 	gin.SetMode(conf.GinMode)
 	accessRouter := gin.Default()
-	proxyRouter := gin.Default()
+	nowplayingRouter := gin.Default()
+
+	// Now Playing CORS
+	corsConfig := cors.DefaultConfig()
+	if len(conf.CorsOrigins) > 0 {
+		corsConfig.AllowOrigins = conf.CorsOrigins
+	} else {
+		corsConfig.AllowAllOrigins = true
+	}
+	nowplayingRouter.Use(cors.New(corsConfig))
 
 	// Set trusted proxies
 	if len(conf.TrustedProxies) > 0 {
@@ -42,7 +46,7 @@ func main() {
 			log.Printf("error setting trusted proxies: %v", err)
 		}
 
-		err = proxyRouter.SetTrustedProxies(conf.TrustedProxies)
+		err = nowplayingRouter.SetTrustedProxies(conf.TrustedProxies)
 		if err != nil {
 			log.Printf("error setting trusted proxies: %v", err)
 		}
@@ -61,18 +65,18 @@ func main() {
 
 	// Setup services
 	authService := services.NewAuthService(sa, cacheInstance)
+	nowplayingService := services.NewNowPlayingService(sa, cacheInstance)
 
 	// Setup handlers
 	authHandler := handlers.NewAuthHandler(conf, authService)
-	proxyHandler := handlers.NewProxyHandler(conf, authService)
+	nowPlayingHandler := handlers.NewNowPlayingHandler(conf, authService, nowplayingService)
 
 	// Setup routes
 	r := routes.NewRoutes(
 		accessRouter,
-		proxyRouter,
-		proxyRoutesConf,
+		nowplayingRouter,
 		authHandler,
-		proxyHandler,
+		nowPlayingHandler,
 	)
 	if err != nil {
 		log.Fatal("failed to setup routes: ", err)
@@ -88,9 +92,9 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	proxyServer := &http.Server{
-		Addr:         fmt.Sprintf(":%s", conf.ProxyPort),
-		Handler:      proxyRouter.Handler(),
+	nowplayingServer := &http.Server{
+		Addr:         fmt.Sprintf(":%s", conf.NowPlayingPort),
+		Handler:      nowplayingRouter.Handler(),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -101,8 +105,8 @@ func main() {
 	})
 
 	g.Go(func() error {
-		log.Printf("Proxy server is listening on %s", proxyServer.Addr)
-		return proxyServer.ListenAndServe()
+		log.Printf("Now Playing server is listening on %s", nowplayingServer.Addr)
+		return nowplayingServer.ListenAndServe()
 	})
 
 	if err = g.Wait(); err != nil {

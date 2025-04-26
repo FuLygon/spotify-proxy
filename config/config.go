@@ -2,15 +2,12 @@ package config
 
 import (
 	"github.com/caarlos0/env/v11"
-	"github.com/go-playground/validator/v10"
-	"github.com/goccy/go-yaml"
 	"github.com/joho/godotenv"
-	"os"
 )
 
 type Config struct {
 	AccessPort         string   `env:"ACCESS_PORT" envDefault:"8000"`
-	ProxyPort          string   `env:"PROXY_PORT" envDefault:"8001"`
+	NowPlayingPort     string   `env:"NOW_PLAYING_PORT" envDefault:"8001"`
 	GinMode            string   `env:"GIN_MODE" envDefault:"debug"`
 	LogLevel           string   `env:"LOG_LEVEL" envDefault:"info"`
 	TrustedProxies     []string `env:"TRUSTED_PROXIES" envDefault:"10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" envSeparator:","`
@@ -21,17 +18,7 @@ type Config struct {
 	Scope              []string `env:"SPOTIFY_SCOPE" envSeparator:","`
 	RefreshToken       string   `env:"SPOTIFY_REFRESH_TOKEN"`
 	RefreshTokenOutput bool     `env:"SPOTIFY_REFRESH_TOKEN_OUTPUT" envDefault:"false"`
-}
-
-var validate = validator.New()
-
-type ProxyRouteConfig struct {
-	Path    string   `yaml:"path" validate:"required"`
-	Methods []string `yaml:"methods" validate:"min=1,dive,oneof=GET POST PUT DELETE PATCH OPTIONS"`
-}
-
-type ProxyRoutesConfig struct {
-	ProxyRoutes []ProxyRouteConfig `yaml:"routes" validate:"dive"`
+	CorsOrigins        []string `env:"CORS_ORIGINS" envSeparator:","`
 }
 
 // LoadConfig loads configuration from environment variables
@@ -44,28 +31,4 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func LoadProxyRoutesConfig(path string) (*ProxyRoutesConfig, error) {
-	// Skip if config file does not exist
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, nil
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var config ProxyRoutesConfig
-	if err = yaml.Unmarshal(data, &config); err != nil {
-		return nil, err
-	}
-
-	err = validate.Struct(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &config, nil
 }
