@@ -35,6 +35,13 @@ func NewNowPlayingHandler(
 const spotifyAPIEndpoint = "https://api.spotify.com"
 
 func (p *nowplayingHandler) HandleCurrentTrack(c *gin.Context) {
+	// Return cached recently played track if available
+	recentTrackCached, found := p.playerService.GetRecentlyPlayedTracksCached()
+	if found {
+		c.JSON(http.StatusOK, recentTrackCached.(map[string]interface{}))
+		return
+	}
+
 	accessToken, err := p.authService.GetAccessToken(c, p.config.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -86,7 +93,7 @@ func (p *nowplayingHandler) HandleQueue(c *gin.Context) {
 
 	reqUrl := fmt.Sprintf("%s/v1/me/player/queue", spotifyAPIEndpoint)
 
-	// queue cache will be updated every 30 seconds
+	// Queue cache will be updated every 30 seconds
 	resp, err := p.playerService.GetPlayerQueue(reqUrl, accessToken, 30)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

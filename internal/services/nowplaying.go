@@ -13,6 +13,7 @@ import (
 type NowPlayingService interface {
 	GetPlayerCurrentTrack(currentTrack, accessToken string) (map[string]interface{}, error)
 	GetRecentlyPlayedTracks(endpoint, accessToken string) (map[string]interface{}, error)
+	GetRecentlyPlayedTracksCached() (interface{}, bool)
 	GetPlayerQueue(endpoint, accessToken string, cacheInterval int) (*models.PlayerQueue, error)
 }
 
@@ -22,7 +23,10 @@ type nowplayingService struct {
 	client *http.Client
 }
 
-const currentQueueCacheKey = "current_queue"
+const (
+	recentTrackCacheKey  = "recent_track"
+	currentQueueCacheKey = "current_queue"
+)
 
 var currentQueueCacheLastUpdate time.Time
 
@@ -89,10 +93,17 @@ func (s *nowplayingService) GetRecentlyPlayedTracks(endpoint, accessToken string
 		response := make(map[string]interface{})
 		response["item"] = recentTrack.Items[0].Track
 		response["is_playing"] = false
+
+		// cache recently played track for 30 seconds, since there no need to fetch new data if the user is not playing
+		s.cache.Set(recentTrackCacheKey, response, 30*time.Second)
 		return response, nil
 	} else {
 		return nil, nil
 	}
+}
+
+func (s *nowplayingService) GetRecentlyPlayedTracksCached() (interface{}, bool) {
+	return s.cache.Get(recentTrackCacheKey)
 }
 
 func (s *nowplayingService) GetPlayerQueue(endpoint, accessToken string, cacheInterval int) (*models.PlayerQueue, error) {
